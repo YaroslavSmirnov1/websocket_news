@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<html>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
+    <head>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script language="javascript" type="text/javascript">
+                $(function() {
+                    
+                var socket = null;
+
+                function log(msg) {
+                    var control = $('#log');
+                    control.html(control.html() + msg + '<br/>');
+                    control.scrollTop(control.scrollTop() + 1000);
+                }
+                
+                function clearlog(sg) {
+                    var control = $('#log');
+                    control.html('');
+                    control.scrollTop(control.scrollTop() + 1000);
+                }
+
+                function connect() {
+                    disconnect(); 
+                    socket = new WebSocket('ws://localhost:8080');
+                    log('Установление соединения...');
+
+                    socket.onopen = function() {
+                        log('Соединение установлено.');
+                        update_ui();
+                    };
+
+                    socket.onclose = function() {
+                        log('Нет соединения.');
+                        socket = null;
+                        update_ui();
+                    };
+                }
+
+                function getPosts() {
+                    socket.onmessage = function (e) {
+                        const today = new Date();
+                        log(today + ': ' + e.data);
+                    };
+                }
+
+                function disconnect() {
+                    if (socket != null) {
+                        log('Разъединение...');
+                        socket.close();
+                        socket = null;
+                        update_ui();
+                    }
+                }
+
+                function update_ui() {
+                    if (socket == null) {
+                        $('#connect').html('Подключиться');
+                    } 
+                    else {
+                        $('#connect').html('Отключиться');
+                    }
+                }
+
+                $('#clear').click(function() {
+                    clearlog();
+                    update_ui();
+                    return false;
+                });
+
+                $('#connect').click(function() {
+                    if (socket == null) {
+                        connect();
+                    } 
+                    else {
+                        disconnect();
+                    }
+                    update_ui();
+                    return false;
+                });
+
+                $('#get_posts').click(function () {
+                    log('Сообщения и события:');
+                    socket.onmessage = function (event) {
+                        const today = new Date();
+                        log(today.toLocaleString() + ': ' + event.data);
+                    };
+                });
+
+                $('#check').click(function () {
+                    if (socket == null) {
+                        log('Нет соединения');
+                    } else {
+                        log('Соединение установлено');
+                    }
+                    update_ui();
+                    return false;
+                });
+                });
+        </script>
+    </head>
+    <body>
+        <br>
+        <div class="container">
+        <div class="well">
+            <h1 class="display-12">Сообщения</h1>
+            <p class="lead" id="log"></p>
+            <hr class="my-4">
+            <p></p>
+            <div class="btn-group" role="group" aria-label="Basic Well">
+            <a role="button" id="get_posts" class="btn btn-success">Получить сообщения</a>
+            <a role="button" id="connect" class="btn btn-primary">Подключиться</a>
+            <a role="button" id="check" class="btn btn-info">Проверить соединение</a>
+            <a role="button" id="clear" class="btn btn-danger">Очистить лог</a>
+            </div>
+        </div>
+        </div>
+    </body>
+</html>
